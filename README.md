@@ -89,6 +89,16 @@ function App() {
 }
 ```
 
+### DIAGRAM & Documentation
+![alt text](./public/diagram.png)
+
+ - Diagrams: It is my first time hearing and learning about XState, I used different state managements in my career. But, I believe they mostly share the same core concepts. I'm still learning the difference of it with the other which I am more familiar which in this case, I cannot able to provide a better explanation.
+
+ - Performance: I only applies basic optimisation process, like lazy loading and created reusability. 
+
+ - Solution: The implementation will different file player and and in return it handles all difference with the same property callback for easy management and controls. For new player, it can adapt to the component logic.
+
 ### LIMITATIONS
  - `Skottie` is not implemented as their documentation lacks of alot of information
  - Test cases has not added due to time constraints
+ - Unable to add web URL at the moment but UI is in place
