@@ -1,84 +1,31 @@
 import { useMachine } from "@xstate/react";
 import playerMachine, { PLAY_STATE } from "./config/state/xstate";
 import { useState, useCallback, Suspense, lazy } from "react";
-import { Theme, Container, Flex, Box, Text, Card } from '@radix-ui/themes';
-import '@radix-ui/themes/styles.css';
+import { Theme, Container, Flex, Box, Text, Card } from "@radix-ui/themes";
+import "@radix-ui/themes/styles.css";
 
 import ControlButton from "./components/ControlButton";
-import { PauseIcon, PlayIcon, Repeat, StopCircle, UploadIcon, Loader2 } from "lucide-react";
+import {
+  PauseIcon,
+  PlayIcon,
+  Repeat,
+  StopCircle,
+  UploadIcon,
+  Loader2,
+} from "lucide-react";
 import SeekBar from "./components/SeekBar";
-import { Button, Dialog, IconButton, Tooltip } from "@radix-ui/themes";
+import { Dialog, IconButton, Tooltip } from "@radix-ui/themes";
 import Dropzone from "react-dropzone";
+import ZoomControl from "./components/ZoomControl";
+import SkiaCanvasKit from "./components/player/SkiaCanvasKit";
 
 // Lazy load the PlayerCard component
-const PlayerCard = lazy(() => import('./components/PlayerCard'));
+const PlayerCard = lazy(() => import("./components/PlayerCard"));
 
 // Define types for refs
 function App() {
   const [state, send] = useMachine(playerMachine);
   const [animationFrame, setAnimationFrame] = useState(0);
-
-  // Memoize handlers
-  // const handlePlayAndStop = useCallback(
-  //   (playState: PLAY_STATE, loop: boolean, progress: number) => {
-  //     const players = [dotLottieRef, reactLottiePlayerRef, lottieWebRef];
-
-  //     // Set loop for all players
-  //     players.forEach((ref) => {
-  //       if (ref.current) {
-  //         ref.current.setLoop(loop);
-  //       }
-  //     });
-
-  //     switch (playState) {
-  //       case PLAY_STATE.PLAYING:
-  //         players.forEach((ref) => {
-  //           if (progress === 0) {
-  //             ref.current?.play();
-  //           } else {
-  //             if (ref === dotLottieRef && ref.current?.setFrame) {
-  //               ref.current.setFrame(0);
-  //             } else {
-  //               ref.current?.goToAndStop(0, true);
-  //             }
-  //             ref.current?.play();
-  //           }
-  //         });
-  //         break;
-  //       case PLAY_STATE.PAUSED:
-  //         players.forEach((ref) => ref.current?.pause());
-  //         break;
-  //       case PLAY_STATE.STOPPED:
-  //         players.forEach((ref) => ref.current?.stop());
-  //         break;
-  //       case PLAY_STATE.SEEKING:
-  //         players.forEach((ref) => {
-  //           if (ref === dotLottieRef && ref.current?.setFrame) {
-  //             ref.current.setFrame(progress);
-  //           } else {
-  //             ref.current?.goToAndStop(progress, true);
-  //           }
-  //         });
-  //         break;
-  //       default:
-  //         players.forEach((ref) => ref.current?.stop());
-  //         break;
-  //     }
-  //   },
-  //   []
-  // );
-
-  // useEffect(() => {
-  //   const subscription = actorRef.subscribe((snapshot) => {
-  //     handlePlayAndStop(
-  //       snapshot.context.playState,
-  //       snapshot.context.loop,
-  //       snapshot.context.progress
-  //     );
-  //   });
-
-  //   return () => subscription.unsubscribe();
-  // }, [actorRef, handlePlayAndStop]);
 
   const handlePlay = useCallback(() => {
     send({ type: "PLAY" });
@@ -102,18 +49,17 @@ function App() {
     },
     [send]
   );
-  
-  const handleOnLoad = useCallback((ref: any) => {
-    const frames = ref?.current?.totalFrames || ref?.totalFrames;
-    if (frames || frames > 0) {
-      setAnimationFrame(frames || 0);
-    }
-    if (ref?.current) {
-      console.log('getDuration ==>', ref, ref?.current?.getDuration())
-      // setAnimationFrame(ref?.current?.getDuration() || 0);
-    }
-    send({ type: 'LOADED' });
-  }, [send]);
+
+  const handleOnLoad = useCallback(
+    (ref: any) => {
+      const frames = ref?.current?.totalFrames || ref?.totalFrames;
+      if (frames || frames > 0) {
+        setAnimationFrame(frames || 0);
+      }
+      send({ type: "LOADED" });
+    },
+    [send]
+  );
 
   const handleComplete = useCallback(() => {
     if (!state.context.loop) {
@@ -129,17 +75,29 @@ function App() {
     [send]
   );
 
+  const handleScaleChange = useCallback(
+    (scale: number) => {
+      send({ type: "SCALE", scale });
+    },
+    [send]
+  );
+
   return (
-    <Theme appearance="light" accentColor="blue" grayColor="slate" scaling="95%">
+    <Theme
+      appearance="light"
+      accentColor="blue"
+      grayColor="slate"
+      scaling="95%"
+    >
       <Container size="4">
         <Box className="min-h-screen py-8">
           <Flex direction="column" gap="4">
             <Text size="8" weight="bold" align="center">
               Lottie Player Synchronization
             </Text>
-            
+
             <Flex direction="column" gap="4" className="mb-20">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                 <Suspense fallback={<LoadingCard />}>
                   <PlayerCard
                     src={state.context.filePath}
@@ -149,6 +107,7 @@ function App() {
                     loop={state.context.loop}
                     progress={state.context.progress}
                     initialPlayer="react-lottie"
+                    scale={state.context.scale}
                   />
                 </Suspense>
                 <Suspense fallback={<LoadingCard />}>
@@ -160,6 +119,7 @@ function App() {
                     loop={state.context.loop}
                     progress={state.context.progress}
                     initialPlayer="dotlottie"
+                    scale={state.context.scale}
                   />
                 </Suspense>
                 <Suspense fallback={<LoadingCard />}>
@@ -171,7 +131,11 @@ function App() {
                     loop={state.context.loop}
                     progress={state.context.progress}
                     initialPlayer="lottie-web"
+                    scale={state.context.scale}
                   />
+                </Suspense>
+                <Suspense fallback={<LoadingCard />}>
+                  <SkiaCanvasKit src={state.context.filePath}/>
                 </Suspense>
               </div>
             </Flex>
@@ -183,7 +147,7 @@ function App() {
                   className="bg-blue-500"
                   onClick={handlePlay}
                   disabled={state.context.playState === PLAY_STATE.PLAYING}
-                  icon={<PlayIcon />}
+                  icon={<PlayIcon size={16} />}
                 />
                 <ControlButton
                   label="Pause"
@@ -193,14 +157,14 @@ function App() {
                     state.context.playState === PLAY_STATE.PAUSED ||
                     state.context.playState === PLAY_STATE.STOPPED
                   }
-                  icon={<PauseIcon />}
+                  icon={<PauseIcon size={16} />}
                 />
                 <ControlButton
                   label="Stop"
                   className="bg-red-500"
                   onClick={handleStop}
                   disabled={state.context.playState === PLAY_STATE.STOPPED}
-                  icon={<StopCircle />}
+                  icon={<StopCircle size={16} />}
                 />
                 <Box className="flex-1">
                   <SeekBar
@@ -210,17 +174,29 @@ function App() {
                     disabled={animationFrame === 0}
                   />
                 </Box>
-                <Tooltip content={state.context.loop ? "Disable Loop" : "Enable Loop"}>
+                <Tooltip
+                  content={state.context.loop ? "Disable Loop" : "Enable Loop"}
+                >
                   <IconButton
                     variant="solid"
                     color={state.context.loop ? "blue" : "gray"}
                     onClick={handleLoopSwitch}
                     className="max-w-18"
                   >
-                    <Repeat />
+                    <Repeat size={16} />
                   </IconButton>
                 </Tooltip>
-                <UploadDialog onUpload={handleUploadFile} disabled={state.context.playState === PLAY_STATE.PLAYING} />
+                <UploadDialog
+                  onUpload={handleUploadFile}
+                  disabled={state.context.playState === PLAY_STATE.PLAYING}
+                />
+                <ZoomControl
+                  scale={state.context.scale}
+                  onScaleChange={handleScaleChange}
+                  min={state.context.scaleConfig.min}
+                  max={state.context.scaleConfig.max}
+                  step={state.context.scaleConfig.step}
+                />
               </Flex>
             </Box>
           </Flex>
@@ -244,7 +220,7 @@ function UploadDialog({ onUpload, disabled }: UploadDialogProps) {
       // Close the dialog after successful upload
       setOpen(false);
     } catch (error) {
-      console.error('Upload failed:', error);
+      console.error("Upload failed:", error);
       // Optionally show an error message to the user
     }
   };
@@ -252,11 +228,11 @@ function UploadDialog({ onUpload, disabled }: UploadDialogProps) {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild={true}>
-        {/* <Tooltip content="Upload Lottie File"> */}
-        <Button title="Upload Lottie File" disabled={disabled}>
-          <UploadIcon />
-        </Button>
-        {/* </Tooltip> */}
+        <IconButton title="Upload Lottie File" disabled={disabled}>
+          <Tooltip content="Upload Lottie File">
+            <UploadIcon size={16} />
+          </Tooltip>
+        </IconButton>
       </Dialog.Trigger>
       <Dialog.Content maxWidth="450px">
         <Dialog.Title>Upload Lottie File</Dialog.Title>

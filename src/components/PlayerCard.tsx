@@ -20,6 +20,7 @@ interface PlayerCardProps {
   loop: boolean;
   progress: number;
   initialPlayer: PlayerType;
+  scale: number;
 }
 
 const LoadingFallback = () => (
@@ -36,6 +37,7 @@ const PlayerCard = ({
   loop,
   progress,
   initialPlayer,
+  scale,
 }: PlayerCardProps) => {
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerType>(initialPlayer);
   const playerRef = useRef<any | LottieWebRef>(null);
@@ -75,29 +77,19 @@ const PlayerCard = ({
           playerRef.current.pause();
           break;
         case PLAY_STATE.STOPPED:
-          if (selectedPlayer === 'lottie-web') {
-            playerRef.current.stop();
-            playerRef.current.goToAndStop(0, true);
-          } else {
             playerRef.current.stop();
             if (playerRef.current?.setFrame) {
               playerRef.current.setFrame(0);
             } else {
               playerRef.current?.goToAndStop(0, true);
             }
-          }
           break;
         case PLAY_STATE.SEEKING: {
-          if (selectedPlayer === 'lottie-web') {
-            // Convert progress to percentage for LottieWeb
-            playerRef.current.goToAndStop(progress, false);
-          } else {
             if (playerRef.current?.setFrame) {
               playerRef.current?.setFrame(progress);
             } else {
               playerRef.current?.goToAndStop(progress, true);
             }
-          }
           break;
         }
       }
@@ -117,6 +109,7 @@ const PlayerCard = ({
       src,
       onLoad: handlePlayerLoad,
       onComplete,
+      scale: scale,
     };
 
     switch (selectedPlayer) {
@@ -156,8 +149,8 @@ const PlayerCard = ({
               ref={(ref: LottieWebRef | null) => {
                 if (ref) {
                   playerRef.current = ref;
-                  handlePlayerLoad(ref);
-                  console.log('ref ==>', ref)
+                  playerRef.current.totalFrames = ref.getDuration(true)
+                  handlePlayerLoad(playerRef);
                 }
               }}
             />
@@ -170,7 +163,7 @@ const PlayerCard = ({
   };
 
   return (
-    <Card size="2" className="relative overflow-hidden">
+    <Card size="2" className="relative overflow-hidden max-h-[400px]">
       <div className="mb-4 flex items-center justify-between">
         <Text as="p" size="2" weight="medium">
           Player Type

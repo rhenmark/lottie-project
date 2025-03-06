@@ -16,6 +16,12 @@ const playerMachine = createMachine({
             playState: PLAY_STATE,
             loop: Boolean,
             filePath: String,
+            scale: Number,
+            scaleConfig: {
+              min: Number,
+              max: Number,
+              step: Number,
+            }
         },
     },
   context: {
@@ -23,6 +29,12 @@ const playerMachine = createMachine({
     loop: false,
     progress: 0,
     filePath: defaultFilePath,
+    scale: 1,
+    scaleConfig: {
+      min: 0.5,
+      max: 2,
+      step: 0.1,
+    }
   },
   on: {
     PLAY: {
@@ -56,6 +68,11 @@ const playerMachine = createMachine({
     UPLOAD: {
         actions: assign({
             filePath: ({event}) => event.filePath,
+        }),
+    },
+    SCALE: {
+        actions: assign({
+            scale: ({event}) => event.scale,
         }),
     },
   },

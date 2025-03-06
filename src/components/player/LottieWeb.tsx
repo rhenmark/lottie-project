@@ -13,6 +13,7 @@ interface LottieWebProps {
   loop?: boolean;
   autoplay?: boolean;
   renderer?: "svg" | "canvas" | "html";
+  scale?: number;
 }
 
 export interface LottieWebRef {
@@ -31,8 +32,8 @@ const LottieWeb = forwardRef<LottieWebRef, LottieWebProps>(
       onLoad,
       onComplete,
       loop = false,
-      autoplay = false,
       renderer = "svg",
+      scale = 1,
     },
     ref
   ) => {
@@ -51,9 +52,9 @@ const LottieWeb = forwardRef<LottieWebRef, LottieWebProps>(
       const anim = lottie.loadAnimation({
         container: containerRef.current,
         path: src,
+        autoplay: false,
         renderer: renderer,
         loop: loop,
-        autoplay: autoplay,
         name: "Lottie Animation",
       });
 
@@ -62,7 +63,6 @@ const LottieWeb = forwardRef<LottieWebRef, LottieWebProps>(
 
       // Event listeners
       const handleDOMLoaded = () => {
-        console.log("LottieWeb Animation DOM Loaded");
         onLoad?.(containerRef.current);
       };
 
@@ -71,8 +71,13 @@ const LottieWeb = forwardRef<LottieWebRef, LottieWebProps>(
         onComplete?.();
       };
 
+      const handleEnterFrame = () => {
+        return null
+      };
+
       anim.addEventListener("DOMLoaded", handleDOMLoaded);
       anim.addEventListener("complete", handleComplete);
+      anim.addEventListener("enterFrame", handleEnterFrame);
 
       // Cleanup
       return () => {
@@ -81,15 +86,15 @@ const LottieWeb = forwardRef<LottieWebRef, LottieWebProps>(
         anim.destroy();
         animationRef.current = null;
       };
-    }, [src, loop, autoplay, renderer, onLoad, onComplete]);
+    }, [src, loop, renderer]);
 
     // Expose animation controls via ref
     useImperativeHandle(ref, () => ({
       play: () => animationRef.current?.play(),
       pause: () => animationRef.current?.pause(),
       stop: () => animationRef.current?.stop(),
-      goToAndStop: (frame: number, isFrame?: boolean) => {
-        animationRef.current?.goToAndStop(frame, isFrame)
+      goToAndStop: (frame: number, isFrame?: boolean ) => {
+        animationRef.current?.goToAndStop(frame, isFrame || true)
       },
       getDuration: (inFrames?: boolean) =>
         animationRef.current?.getDuration(inFrames) || 0,
@@ -105,7 +110,8 @@ const LottieWeb = forwardRef<LottieWebRef, LottieWebProps>(
         <div
           ref={containerRef}
           id="lottieWeb"
-          className="w-full h-64"
+          className="h-[300px] w-[300px]"
+          style={{ transform: `scale(${scale})` }}
         />
       </div>
     );

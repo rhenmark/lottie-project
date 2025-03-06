@@ -15,12 +15,12 @@ const ControlButton = ({
 }) => {
   return (
     <button
-      className={`${className} text-white px-4 py-2 rounded-md disabled:opacity-50`}
+      className={`${className} text-white px-2 py-2 rounded-md disabled:opacity-50`}
       onClick={onClick}
       disabled={disabled}
       {...otherProps}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 text-sm">
         {icon}
         {label}
       </div>

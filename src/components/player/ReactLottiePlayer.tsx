@@ -6,15 +6,16 @@ interface LottieWebProps {
   onComplete?: () => void;
   lottieRef?: (ref: Player) => void;
   src: string;
+  scale?: number;
 }
 
-const ReactLottiePlayer = forwardRef<Player, LottieWebProps>(({ onLoad, onComplete, src }, ref) => {
+const ReactLottiePlayer = forwardRef<Player, LottieWebProps>(({ onLoad, onComplete, src, scale = 1 }, ref) => {
   return (
     <div className='p-2'>
         <Player
             lottieRef={ref}
             src={src}
-            style={{ height: "300px", width: "300px" }}
+            style={{ height: "300px", width: "300px", transform: `scale(${scale})` }}
             onEvent={(event) => {
                 if (event === 'load') onLoad?.();
                 if (event === 'complete') onComplete?.();
