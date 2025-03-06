@@ -1,29 +1,31 @@
 import { createMachine, assign } from "xstate";
+import { PLAYER_VIEW, PLAY_STATE } from "../../utils/constant";
 
 
-export enum PLAY_STATE {
-    STOPPED = 'STOPPED',
-    PLAYING = 'PLAYING',
-    PAUSED = 'PAUSED',
-    SEEKING = 'SEEKING',
-  }
-
-const defaultFilePath = "https://assets3.lottiefiles.com/packages/lf20_UJNc2t.json";
+const defaultFilePath =
+  "https://assets3.lottiefiles.com/packages/lf20_UJNc2t.json";
 
 const playerMachine = createMachine({
-    schemas: {
-        context: {
-            playState: PLAY_STATE,
-            loop: Boolean,
-            filePath: String,
-            scale: Number,
-            scaleConfig: {
-              min: Number,
-              max: Number,
-              step: Number,
-            }
-        },
+  schemas: {
+    context: {
+      playState: PLAY_STATE,
+      loop: Boolean,
+      filePath: String,
+      scale: Number,
+      scaleConfig: {
+        min: Number,
+        max: Number,
+        step: Number,
+      },
+      speed: Number,
+      speedConfig: {
+        min: Number,
+        max: Number,
+        step: Number,
+      },
+      playerView: PLAYER_VIEW,
     },
+  },
   context: {
     playState: PLAY_STATE.STOPPED,
     loop: false,
@@ -34,7 +36,14 @@ const playerMachine = createMachine({
       min: 0.5,
       max: 2,
       step: 0.1,
-    }
+    },
+    speed: 1,
+    speedConfig: {
+      min: 1,
+      max: 3,
+      step: 1,
+    },
+    playerView: PLAYER_VIEW.SINGLE,
   },
   on: {
     PLAY: {
@@ -50,30 +59,54 @@ const playerMachine = createMachine({
       }),
     },
     PAUSE: {
-        actions: assign({
-          playState: PLAY_STATE.PAUSED,
-        }),
-      },
+      actions: assign({
+        playState: PLAY_STATE.PAUSED,
+      }),
+    },
     LOOP: {
       actions: assign({
-        loop: ({context}) => !context.loop,
+        loop: ({ context }) => !context.loop,
       }),
     },
     SEEK: {
-        actions: assign({
-            progress: ({event}) => event.progress,
-            playState: PLAY_STATE.SEEKING,
-        }),
+      actions: assign({
+        progress: ({ event }) => event.progress,
+        playState: PLAY_STATE.SEEKING,
+      }),
     },
     UPLOAD: {
-        actions: assign({
-            filePath: ({event}) => event.filePath,
-        }),
+      actions: assign({
+        filePath: ({ event }) => event.filePath,
+      }),
     },
     SCALE: {
-        actions: assign({
-            scale: ({event}) => event.scale,
-        }),
+      actions: assign({
+        scale: ({ event }) => event.scale,
+      }),
+    },
+    SPEED: {
+      actions: assign({
+        speed: ({
+          context,
+        }: {
+          context: any;
+        }) => {
+          const nextSpeed = context.speed + context.speedConfig.step;
+
+          if (nextSpeed > context.speedConfig.max) {
+            return context.speedConfig.min;
+          } else if (nextSpeed <= context.speedConfig.min) {
+            return context.speedConfig.min;
+          } else {
+            return nextSpeed;
+          }
+        },
+      }),
+    },
+    PLAYER_VIEW: {
+      actions: assign({
+        playerView: ({ event }) => event.playerView,
+      }),
     },
   },
 });

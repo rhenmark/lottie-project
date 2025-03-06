@@ -13,7 +13,7 @@ const DotLottie = (props: {src: string, onLoad: (ref: any) => void, scale: numbe
 
 
   return (
-    <div className="p-2">
+    <div className="p-2 grid place-items-center">
       <DotLottieReact
         src={props.src}
         dotLottieRefCallback={(ref) => {

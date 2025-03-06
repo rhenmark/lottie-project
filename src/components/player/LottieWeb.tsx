@@ -23,6 +23,7 @@ export interface LottieWebRef {
   goToAndStop: (frame: number, isFrame?: boolean) => void;
   getDuration: (inFrames?: boolean) => number;
   setLoop: (loop: boolean) => void;
+  setSpeed: (speed: number) => void;
 }
 
 const LottieWeb = forwardRef<LottieWebRef, LottieWebProps>(
@@ -103,10 +104,15 @@ const LottieWeb = forwardRef<LottieWebRef, LottieWebProps>(
           animationRef.current.setLoop(value);
         }
       },
+      setSpeed: (speed: number) => {
+        if (animationRef.current) {
+          animationRef.current.setSpeed(speed);
+        }
+      },
     }));
 
     return (
-      <div className="p-2">
+      <div className="p-2 grid place-items-center">
         <div
           ref={containerRef}
           id="lottieWeb"

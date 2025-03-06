@@ -1,16 +1,14 @@
-import { Card, Select, Text } from "@radix-ui/themes";
+import { Card, Select } from "@radix-ui/themes";
 import { useRef, useState, useEffect, Suspense } from "react";
-import { PLAY_STATE } from "../config/state/xstate";
 import { Loader2 } from "lucide-react";
 import React from "react";
-import { LottieWebRef } from "./player/LottieWeb";
+import { LottieWebRef } from "../player/LottieWeb";
+import { PLAY_STATE, PlayerType } from "../../utils/constant";
 
 // Lazy load the player components
-const DotLottie = React.lazy(() => import("./player/DotLottie"));
-const LottieWeb = React.lazy(() => import("./player/LottieWeb"));
-const ReactLottiePlayer = React.lazy(() => import("./player/ReactLottiePlayer"));
-
-type PlayerType = "react-lottie" | "dotlottie" | "lottie-web";
+const DotLottie = React.lazy(() => import("../player/DotLottie"));
+const LottieWeb = React.lazy(() => import("../player/LottieWeb"));
+const ReactLottiePlayer = React.lazy(() => import("../player/ReactLottiePlayer"));
 
 interface PlayerCardProps {
   src: string;
@@ -21,6 +19,7 @@ interface PlayerCardProps {
   progress: number;
   initialPlayer: PlayerType;
   scale: number;
+  speed: number;
 }
 
 const LoadingFallback = () => (
@@ -38,6 +37,7 @@ const PlayerCard = ({
   progress,
   initialPlayer,
   scale,
+  speed,
 }: PlayerCardProps) => {
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerType>(initialPlayer);
   const playerRef = useRef<any | LottieWebRef>(null);
@@ -53,6 +53,7 @@ const PlayerCard = ({
       switch (playState) {
         case PLAY_STATE.PLAYING: {
           if (selectedPlayer === 'lottie-web') {
+            playerRef.current.setSpeed(speed);
             if (progress === 0) {
               playerRef.current.play();
             } else {
@@ -165,9 +166,9 @@ const PlayerCard = ({
   return (
     <Card size="2" className="relative overflow-hidden max-h-[400px]">
       <div className="mb-4 flex items-center justify-between">
-        <Text as="p" size="2" weight="medium">
+        {/* <Text as="p" size="2" weight="medium">
           Player Type
-        </Text>
+        </Text> */}
         <Select.Root
           defaultValue={initialPlayer}
           onValueChange={(value) => {

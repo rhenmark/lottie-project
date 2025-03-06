@@ -1,26 +1,35 @@
 import { useMachine } from "@xstate/react";
-import playerMachine, { PLAY_STATE } from "./config/state/xstate";
+import playerMachine from "./config/state/xstate";
 import { useState, useCallback, Suspense, lazy } from "react";
-import { Theme, Container, Flex, Box, Text, Card } from "@radix-ui/themes";
+import {
+  Theme,
+  Container,
+  Flex,
+  Box,
+  Text,
+  SegmentedControl,
+  TextField,
+} from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
 
-import ControlButton from "./components/ControlButton";
+import ControlButton from "./components/controls/ControlButton";
 import {
+  ChevronRight,
   PauseIcon,
   PlayIcon,
   Repeat,
   StopCircle,
   UploadIcon,
-  Loader2,
 } from "lucide-react";
-import SeekBar from "./components/SeekBar";
+import SeekBar from "./components/controls/SeekBar";
 import { Dialog, IconButton, Tooltip } from "@radix-ui/themes";
 import Dropzone from "react-dropzone";
-import ZoomControl from "./components/ZoomControl";
-import SkiaCanvasKit from "./components/player/SkiaCanvasKit";
+import ZoomControl from "./components/controls/ZoomControl";
+import LoadingCard from "./components/LoadingCard";
+import { PLAY_STATE, PLAYER_VIEW, players, PlayerType } from "./utils/constant";
 
 // Lazy load the PlayerCard component
-const PlayerCard = lazy(() => import("./components/PlayerCard"));
+const PlayerCard = lazy(() => import("./components/controls/PlayerCard"));
 
 // Define types for refs
 function App() {
@@ -68,9 +77,8 @@ function App() {
   }, [state.context.loop, handleStop]);
 
   const handleUploadFile = useCallback(
-    (file: File) => {
-      console.log("upload file", URL.createObjectURL(file));
-      send({ type: "UPLOAD", filePath: URL.createObjectURL(file) });
+    (filePath: string) => {
+      send({ type: "UPLOAD", filePath });
     },
     [send]
   );
@@ -82,6 +90,26 @@ function App() {
     [send]
   );
 
+  const handleSpeedChange = useCallback(() => {
+    send({ type: "SPEED" });
+  }, [send]);
+
+  const handlePlayerViewChange = useCallback(
+    (value: PLAYER_VIEW) => {
+      send({ type: "PLAYER_VIEW", playerView: value });
+    },
+    [send]
+  );
+
+  const playerView =
+    state.context.playerView === PLAYER_VIEW.SINGLE
+      ? players.slice(0, 1)
+      : players;
+  const playerViewClass =
+    state.context.playerView === PLAYER_VIEW.SINGLE
+      ? "grid-cols-1"
+      : "grid-cols-2 lg:grid-cols-2";
+
   return (
     <Theme
       appearance="light"
@@ -89,107 +117,112 @@ function App() {
       grayColor="slate"
       scaling="95%"
     >
-      <Container size="4">
+      <Container size="4" className="relative">
         <Box className="min-h-screen py-8">
           <Flex direction="column" gap="4">
             <Text size="8" weight="bold" align="center">
               Lottie Player Synchronization
             </Text>
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-gray-500 bg-gray-100 p-2 rounded-md px-4 md:px-2">
+                <span className="font-bold">Current File:</span>{" "}
+                {state.context.filePath}
+              </div>
+              <SegmentedControl.Root
+                defaultValue={state.context.playerView}
+                onValueChange={handlePlayerViewChange}
+              >
+                <SegmentedControl.Item value={PLAYER_VIEW.SINGLE}>
+                  Single
+                </SegmentedControl.Item>
+                <SegmentedControl.Item value={PLAYER_VIEW.MULTIPLE}>
+                  Multiple
+                </SegmentedControl.Item>
+              </SegmentedControl.Root>
+            </div>
 
-            <Flex direction="column" gap="4" className="mb-20">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                <Suspense fallback={<LoadingCard />}>
-                  <PlayerCard
-                    src={state.context.filePath}
-                    onLoad={handleOnLoad}
-                    onComplete={handleComplete}
-                    playState={state.context.playState}
-                    loop={state.context.loop}
-                    progress={state.context.progress}
-                    initialPlayer="react-lottie"
-                    scale={state.context.scale}
-                  />
-                </Suspense>
-                <Suspense fallback={<LoadingCard />}>
-                  <PlayerCard
-                    src={state.context.filePath}
-                    onLoad={handleOnLoad}
-                    onComplete={handleComplete}
-                    playState={state.context.playState}
-                    loop={state.context.loop}
-                    progress={state.context.progress}
-                    initialPlayer="dotlottie"
-                    scale={state.context.scale}
-                  />
-                </Suspense>
-                <Suspense fallback={<LoadingCard />}>
-                  <PlayerCard
-                    src={state.context.filePath}
-                    onLoad={handleOnLoad}
-                    onComplete={handleComplete}
-                    playState={state.context.playState}
-                    loop={state.context.loop}
-                    progress={state.context.progress}
-                    initialPlayer="lottie-web"
-                    scale={state.context.scale}
-                  />
-                </Suspense>
-                <Suspense fallback={<LoadingCard />}>
-                  <SkiaCanvasKit src={state.context.filePath}/>
-                </Suspense>
+            <Flex direction="column" gap="4" className="md:mb-20 mb-40">
+              <div className={`grid ${playerViewClass} gap-4`}>
+                {playerView.map((player) => {
+                  return (
+                    <Suspense fallback={<LoadingCard />} key={player.id}>
+                      <PlayerCard
+                        src={state.context.filePath}
+                        onLoad={handleOnLoad}
+                        onComplete={handleComplete}
+                        playState={state.context.playState}
+                        loop={state.context.loop}
+                        progress={state.context.progress}
+                        initialPlayer={player.id as PlayerType}
+                        scale={state.context.scale}
+                        speed={state.context.speed}
+                      />
+                    </Suspense>
+                  );
+                })}
               </div>
             </Flex>
 
             <Box className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 py-4 px-8">
-              <Flex gap="4" align="center" justify="center">
-                <ControlButton
-                  label="Play"
-                  className="bg-blue-500"
-                  onClick={handlePlay}
-                  disabled={state.context.playState === PLAY_STATE.PLAYING}
-                  icon={<PlayIcon size={16} />}
-                />
-                <ControlButton
-                  label="Pause"
-                  className="bg-yellow-500"
-                  onClick={handlePause}
-                  disabled={
-                    state.context.playState === PLAY_STATE.PAUSED ||
-                    state.context.playState === PLAY_STATE.STOPPED
-                  }
-                  icon={<PauseIcon size={16} />}
-                />
-                <ControlButton
-                  label="Stop"
-                  className="bg-red-500"
-                  onClick={handleStop}
-                  disabled={state.context.playState === PLAY_STATE.STOPPED}
-                  icon={<StopCircle size={16} />}
-                />
-                <Box className="flex-1">
+              <div className="grid grid-cols-1 md:grid-flow-col md:grid-cols-[auto_1fr_20%] gap-4">
+                <div className="flex gap-2 w-full">
+                  <ControlButton
+                    label="Play"
+                    className="bg-blue-500"
+                    onClick={handlePlay}
+                    disabled={state.context.playState === PLAY_STATE.PLAYING}
+                    icon={<PlayIcon size={16} />}
+                  />
+                  <ControlButton
+                    label="Pause"
+                    className="bg-yellow-500"
+                    onClick={handlePause}
+                    disabled={
+                      state.context.playState === PLAY_STATE.PAUSED ||
+                      state.context.playState === PLAY_STATE.STOPPED
+                    }
+                    icon={<PauseIcon size={16} />}
+                  />
+                  <ControlButton
+                    label="Stop"
+                    className="bg-red-500"
+                    onClick={handleStop}
+                    disabled={state.context.playState === PLAY_STATE.STOPPED}
+                    icon={<StopCircle size={16} />}
+                  />
+                </div>
+                <div className="grid grid-flow-col grid-cols-[80%_auto_auto_auto] gap-2 justify-center items-center w-full">
                   <SeekBar
                     totalFrames={animationFrame}
                     currentFrame={state.context.progress}
                     onSeek={handleSeek}
                     disabled={animationFrame === 0}
                   />
-                </Box>
-                <Tooltip
-                  content={state.context.loop ? "Disable Loop" : "Enable Loop"}
-                >
-                  <IconButton
-                    variant="solid"
-                    color={state.context.loop ? "blue" : "gray"}
-                    onClick={handleLoopSwitch}
-                    className="max-w-18"
+                  <Tooltip
+                    content={
+                      state.context.loop ? "Disable Loop" : "Enable Loop"
+                    }
                   >
-                    <Repeat size={16} />
-                  </IconButton>
-                </Tooltip>
-                <UploadDialog
-                  onUpload={handleUploadFile}
-                  disabled={state.context.playState === PLAY_STATE.PLAYING}
-                />
+                    <IconButton
+                      variant="solid"
+                      color={state.context.loop ? "blue" : "gray"}
+                      onClick={handleLoopSwitch}
+                      className="max-w-18"
+                    >
+                      <Repeat size={16} />
+                    </IconButton>
+                  </Tooltip>
+                  <UploadDialog
+                    onUpload={handleUploadFile}
+                    disabled={state.context.playState === PLAY_STATE.PLAYING}
+                  />
+                  <Tooltip content="Set Speed">
+                    <IconButton onClick={handleSpeedChange}>
+                      {state.context.speed}X
+                    </IconButton>
+                  </Tooltip>
+                </div>
+
                 <ZoomControl
                   scale={state.context.scale}
                   onScaleChange={handleScaleChange}
@@ -197,7 +230,7 @@ function App() {
                   max={state.context.scaleConfig.max}
                   step={state.context.scaleConfig.step}
                 />
-              </Flex>
+              </div>
             </Box>
           </Flex>
         </Box>
@@ -207,22 +240,33 @@ function App() {
 }
 
 interface UploadDialogProps {
-  onUpload: (file: File) => void | Promise<void>;
+  onUpload: (file: string) => void | Promise<void>;
   disabled?: boolean;
 }
 
-function UploadDialog({ onUpload, disabled }: UploadDialogProps) {
+export function UploadDialog({ onUpload, disabled }: UploadDialogProps) {
   const [open, setOpen] = useState(false);
+  const [uploadType] = useState<'file' | 'url'>('file');
+  const [text, setText] = useState('');
 
   const handleDrop = async (acceptedFiles: File[]) => {
     try {
-      await onUpload(acceptedFiles[0]);
-      // Close the dialog after successful upload
+      const filePath = URL.createObjectURL(acceptedFiles[0]);
+      await onUpload(filePath);
       setOpen(false);
     } catch (error) {
       console.error("Upload failed:", error);
-      // Optionally show an error message to the user
     }
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setText(e.target.value);
+  };
+
+  const handleUpload = () => {
+      onUpload(text);
+      setOpen(false);
+      
   };
 
   return (
@@ -236,30 +280,45 @@ function UploadDialog({ onUpload, disabled }: UploadDialogProps) {
       </Dialog.Trigger>
       <Dialog.Content maxWidth="450px">
         <Dialog.Title>Upload Lottie File</Dialog.Title>
-        <div className="mt-4 border border-gray-300 rounded-md p-4 min-h-36">
-          <Dropzone onDrop={handleDrop}>
+        <div className="mt-4 border border-gray-300 rounded-md p-4 min-h-[200px]">
+          <SegmentedControl.Root defaultValue={uploadType}>
+            <SegmentedControl.Item value={'file'}>File</SegmentedControl.Item>
+            <SegmentedControl.Item value={'url'}>URL</SegmentedControl.Item>
+          </SegmentedControl.Root>
+          {uploadType === 'file' && (
+            <Dropzone
+              onDrop={handleDrop}
+            accept={{
+              "application/json": [".json"],
+            }}
+           maxFiles={1}
+          >
             {({ getRootProps, getInputProps }) => (
-              <section>
-                <div {...getRootProps()}>
+              <section  className="mt-4 h-full min-h-[200px]  " >
+                <div {...getRootProps()}  className="mt-4 h-full min-h-[200px] grid place-items-center" >
                   <input {...getInputProps()} />
-                  <p>Drag 'n' drop some files here, or click to select files</p>
+                  <p>Drag 'n' lottie file</p>
                 </div>
               </section>
             )}
           </Dropzone>
+          )}
+          {uploadType === 'url' && (
+            <div className="mt-10 flex">
+            <TextField.Root placeholder="Enter Lottie URL"  size="2" className="w-full" onChange={handleTextChange}>
+              <TextField.Slot></TextField.Slot>
+              <TextField.Slot className="!p-0">
+                <IconButton onClick={handleUpload}>
+                <ChevronRight size={16} />
+              </IconButton>
+              </TextField.Slot>
+            </TextField.Root>
+            </div>
+          )}
         </div>
       </Dialog.Content>
     </Dialog.Root>
   );
 }
-
-// Loading card component
-const LoadingCard = () => (
-  <Card size="2">
-    <Flex align="center" justify="center" className="min-h-[200px]">
-      <Loader2 className="animate-spin" />
-    </Flex>
-  </Card>
-);
 
 export default App;

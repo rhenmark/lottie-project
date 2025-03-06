@@ -88,7 +88,7 @@ const SeekBar: React.FC<SeekBarProps> = ({
   }, [isDragging, disabled]);
 
   return (
-    <div className="flex flex-col space-y-2 ">
+    <div className="flex flex-col space-y-2 mr-2 ">
       <div
         ref={progressBarRef}
         className={`w-full min-w-60 h-2 rounded-full cursor-pointer relative 

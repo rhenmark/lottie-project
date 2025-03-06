@@ -90,3 +90,5 @@ function App() {
 ```
 
 ### LIMITATIONS
+ - `Skottie` is not implemented as their documentation lacks of alot of information
+ - Test cases has not added due to time constraints

@@ -11,7 +11,7 @@ interface LottieWebProps {
 
 const ReactLottiePlayer = forwardRef<Player, LottieWebProps>(({ onLoad, onComplete, src, scale = 1 }, ref) => {
   return (
-    <div className='p-2'>
+    <div className='p-2 grid place-items-center'>
         <Player
             lottieRef={ref}
             src={src}
