@@ -23,6 +23,9 @@ importers:
       '@xstate/react':
         specifier: ^5.0.2
         version: 5.0.2(@types/react@19.0.10)(react@19.0.0)(xstate@5.19.2)
+      canvaskit-wasm:
+        specifier: ^0.39.1
+        version: 0.39.1
       lottie-web:
         specifier: ^5.12.2
         version: 5.12.2
@@ -1340,6 +1343,9 @@ packages:
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0
 
+  '@webgpu/types@0.1.21':
+    resolution: {integrity: sha512-pUrWq3V5PiSGFLeLxoGqReTZmiiXwY3jRkIG5sLLKjyqNxrwm/04b4nw7LSmGWJcKk59XOM/YRTUwOzo4MMlow==}
+
   '@xstate/react@5.0.2':
     resolution: {integrity: sha512-x5GOrE0ZYjU2ba986u0CCp7SaPwzElSn1SW0mZ9MuBgsZ+BW7vTLVOvGmURynwojdso8d6nVbK3c2+MRVqGVgA==}
     peerDependencies:
@@ -1401,6 +1407,9 @@ packages:
 
   caniuse-lite@1.0.30001701:
     resolution: {integrity: sha512-faRs/AW3jA9nTwmJBSO1PQ6L/EOgsB5HMQQq4iCu5zhPgVVgO/pZRHlmatwijZKetFw8/Pr4q6dEN8sJuq8qTw==}
+
+  canvaskit-wasm@0.39.1:
+    resolution: {integrity: sha512-Gy3lCmhUdKq+8bvDrs9t8+qf7RvcjuQn+we7vTVVyqgOVO1UVfHpsnBxkTZw+R4ApEJ3D5fKySl9TU11hmjl/A==}
 
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
@@ -3340,6 +3349,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@webgpu/types@0.1.21': {}
+
   '@xstate/react@5.0.2(@types/react@19.0.10)(react@19.0.0)(xstate@5.19.2)':
     dependencies:
       react: 19.0.0
@@ -3400,6 +3411,10 @@ snapshots:
   callsites@3.1.0: {}
 
   caniuse-lite@1.0.30001701: {}
+
+  canvaskit-wasm@0.39.1:
+    dependencies:
+      '@webgpu/types': 0.1.21
 
   chalk@4.1.2:
     dependencies:

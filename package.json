@@ -15,6 +15,7 @@
     "@radix-ui/themes": "^3.2.1",
     "@tailwindcss/vite": "^4.0.9",
     "@xstate/react": "^5.0.2",
+    "canvaskit-wasm": "^0.39.1",
     "lottie-web": "^5.12.2",
     "lucide-react": "^0.477.0",
     "react": "^19.0.0",
