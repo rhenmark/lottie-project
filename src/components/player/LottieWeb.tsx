@@ -3,7 +3,6 @@ import {
   useRef,
   useEffect,
   useImperativeHandle,
-  useState,
 } from "react";
 import lottie, { AnimationItem } from "lottie-web";
 
@@ -89,8 +88,9 @@ const LottieWeb = forwardRef<LottieWebRef, LottieWebProps>(
       play: () => animationRef.current?.play(),
       pause: () => animationRef.current?.pause(),
       stop: () => animationRef.current?.stop(),
-      goToAndStop: (frame: number, isFrame?: boolean) =>
-        animationRef.current?.goToAndStop(frame, isFrame),
+      goToAndStop: (frame: number, isFrame?: boolean) => {
+        animationRef.current?.goToAndStop(frame, isFrame)
+      },
       getDuration: (inFrames?: boolean) =>
         animationRef.current?.getDuration(inFrames) || 0,
       setLoop: (value: boolean) => {
@@ -102,7 +102,6 @@ const LottieWeb = forwardRef<LottieWebRef, LottieWebProps>(
 
     return (
       <div className="p-2">
-        <h4>LottieWeb</h4>
         <div
           ref={containerRef}
           id="lottieWeb"

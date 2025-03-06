@@ -1,98 +1,84 @@
 import { useMachine } from "@xstate/react";
-import playerMachine, { PLAY_STATE } from "./state/xstate";
-import { Player } from "@lottiefiles/react-lottie-player";
-import { useRef, useEffect, useState, useCallback } from "react";
+import playerMachine, { PLAY_STATE } from "./config/state/xstate";
+import { useState, useCallback, Suspense, lazy } from "react";
+import { Theme, Container, Flex, Box, Text, Card } from '@radix-ui/themes';
+import '@radix-ui/themes/styles.css';
 
-import Switch from "./components/Switch";
 import ControlButton from "./components/ControlButton";
-import { PauseIcon, PlayIcon, StopCircle, UploadIcon } from "lucide-react";
+import { PauseIcon, PlayIcon, Repeat, StopCircle, UploadIcon, Loader2 } from "lucide-react";
 import SeekBar from "./components/SeekBar";
-import DotLottie from "./components/player/DotLottie";
-import ReactLottiePlayer from "./components/player/ReactLottiePlayer";
-import LottieWeb, { LottieWebRef } from "./components/player/LottieWeb";
-import { Button, Dialog } from "@radix-ui/themes";
+import { Button, Dialog, IconButton, Tooltip } from "@radix-ui/themes";
 import Dropzone from "react-dropzone";
 
-// Define types for refs
-interface LottieRef {
-  play: () => void;
-  pause: () => void;
-  stop: () => void;
-  setLoop: (loop: boolean) => void;
-  goToAndStop: (progress: number, x?: boolean) => void;
-  setFrame?: (progress: number, x?: boolean) => void;
-  totalFrames?: number;
-}
+// Lazy load the PlayerCard component
+const PlayerCard = lazy(() => import('./components/PlayerCard'));
 
+// Define types for refs
 function App() {
-  const [state, send, actorRef] = useMachine(playerMachine);
-  const reactLottiePlayerRef = useRef<Player>(null);
-  const dotLottieRef = useRef<LottieRef | null>(null);
-  const lottieWebRef = useRef<LottieWebRef>(null);
+  const [state, send] = useMachine(playerMachine);
   const [animationFrame, setAnimationFrame] = useState(0);
 
   // Memoize handlers
-  const handlePlayAndStop = useCallback(
-    (playState: PLAY_STATE, loop: boolean, progress: number) => {
-      const players = [dotLottieRef, reactLottiePlayerRef, lottieWebRef];
+  // const handlePlayAndStop = useCallback(
+  //   (playState: PLAY_STATE, loop: boolean, progress: number) => {
+  //     const players = [dotLottieRef, reactLottiePlayerRef, lottieWebRef];
 
-      // Set loop for all players
-      players.forEach((ref) => {
-        if (ref.current) {
-          ref.current.setLoop(loop);
-        }
-      });
+  //     // Set loop for all players
+  //     players.forEach((ref) => {
+  //       if (ref.current) {
+  //         ref.current.setLoop(loop);
+  //       }
+  //     });
 
+  //     switch (playState) {
+  //       case PLAY_STATE.PLAYING:
+  //         players.forEach((ref) => {
+  //           if (progress === 0) {
+  //             ref.current?.play();
+  //           } else {
+  //             if (ref === dotLottieRef && ref.current?.setFrame) {
+  //               ref.current.setFrame(0);
+  //             } else {
+  //               ref.current?.goToAndStop(0, true);
+  //             }
+  //             ref.current?.play();
+  //           }
+  //         });
+  //         break;
+  //       case PLAY_STATE.PAUSED:
+  //         players.forEach((ref) => ref.current?.pause());
+  //         break;
+  //       case PLAY_STATE.STOPPED:
+  //         players.forEach((ref) => ref.current?.stop());
+  //         break;
+  //       case PLAY_STATE.SEEKING:
+  //         players.forEach((ref) => {
+  //           if (ref === dotLottieRef && ref.current?.setFrame) {
+  //             ref.current.setFrame(progress);
+  //           } else {
+  //             ref.current?.goToAndStop(progress, true);
+  //           }
+  //         });
+  //         break;
+  //       default:
+  //         players.forEach((ref) => ref.current?.stop());
+  //         break;
+  //     }
+  //   },
+  //   []
+  // );
 
-      switch (playState) {
-        case PLAY_STATE.PLAYING:
-          players.forEach((ref) => {
-            if (progress === 0) {
-              ref.current?.play();
-            } else {
-              if (ref === dotLottieRef && ref.current?.setFrame) {
-                ref.current.setFrame(0);
-              } else {
-                ref.current?.goToAndStop(0, true);
-              }
-              ref.current?.play();
-            }
-          });
-          break;
-        case PLAY_STATE.PAUSED:
-          players.forEach((ref) => ref.current?.pause());
-          break;
-        case PLAY_STATE.STOPPED:
-          players.forEach((ref) => ref.current?.stop());
-          break;
-        case PLAY_STATE.SEEKING:
-          players.forEach((ref) => {
-            if (ref === dotLottieRef && ref.current?.setFrame) {
-              ref.current.setFrame(progress);
-            } else {
-              ref.current?.goToAndStop(progress, true);
-            }
-          });
-          break;
-        default:
-          players.forEach((ref) => ref.current?.stop());
-          break;
-      }
-    },
-    []
-  );
+  // useEffect(() => {
+  //   const subscription = actorRef.subscribe((snapshot) => {
+  //     handlePlayAndStop(
+  //       snapshot.context.playState,
+  //       snapshot.context.loop,
+  //       snapshot.context.progress
+  //     );
+  //   });
 
-  useEffect(() => {
-    const subscription = actorRef.subscribe((snapshot) => {
-      handlePlayAndStop(
-        snapshot.context.playState,
-        snapshot.context.loop,
-        snapshot.context.progress
-      );
-    });
-
-    return () => subscription.unsubscribe();
-  }, [actorRef, handlePlayAndStop]);
+  //   return () => subscription.unsubscribe();
+  // }, [actorRef, handlePlayAndStop]);
 
   const handlePlay = useCallback(() => {
     send({ type: "PLAY" });
@@ -116,32 +102,18 @@ function App() {
     },
     [send]
   );
-
-  const handleDotLottieLoad = useCallback((ref: LottieRef) => {
-    dotLottieRef.current = ref;
-    const frames = ref?.totalFrames;
-    setAnimationFrame(frames || 0);
-
-    if (ref) {
-      ref.goToAndStop = (progress: number, x?: boolean) => {
-        if (ref.setFrame) {
-          ref.setFrame(progress, x);
-        }
-      };
+  
+  const handleOnLoad = useCallback((ref: any) => {
+    const frames = ref?.current?.totalFrames || ref?.totalFrames;
+    if (frames || frames > 0) {
+      setAnimationFrame(frames || 0);
     }
-  }, []);
-
-  const handleReactLottieLoad = useCallback(() => {
-    if (reactLottiePlayerRef.current?.totalFrames) {
-      setAnimationFrame(reactLottiePlayerRef.current?.totalFrames || 0);
+    if (ref?.current) {
+      console.log('getDuration ==>', ref, ref?.current?.getDuration())
+      // setAnimationFrame(ref?.current?.getDuration() || 0);
     }
-  }, []);
-
-  const handleLottieWebLoad = useCallback(() => {
-    if (lottieWebRef.current?.totalFrames) {
-      setAnimationFrame(lottieWebRef.current?.totalFrames || 0);
-    }
-  }, []);
+    send({ type: 'LOADED' });
+  }, [send]);
 
   const handleComplete = useCallback(() => {
     if (!state.context.loop) {
@@ -158,93 +130,112 @@ function App() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Lottie Player Synchronization
-        </h1>
-        <div className="grid grid-cols-2 justify-center items-baseline gap-4">
-          <div className="border border-gray-300 h-full">
-            <DotLottie
-              ref={dotLottieRef}
-              onLoad={handleDotLottieLoad}
-              onComplete={handleComplete}
-              src={state.context.filePath}
-            />
-          </div>
-          <div className="border border-gray-300 h-full">
-            <ReactLottiePlayer
-              ref={(ref) => (reactLottiePlayerRef.current = ref)}
-              onLoad={handleReactLottieLoad}
-              onComplete={() => {
-                if (!state.context.loop) {
-                  handleStop();
-                }
-              }}
-              src={state.context.filePath}
-            />
-          </div>
-          <div className="border border-gray-300 h-full">
-            <LottieWeb
-              ref={lottieWebRef}
-              onLoad={handleLottieWebLoad}
-              src={state.context.filePath}
-            />
-          </div>
-        </div>
-        <div className="flex gap-4 mt-4 justify-center items-baseline">
-          <ControlButton
-            label="Play"
-            className="bg-blue-500"
-            onClick={handlePlay}
-            disabled={state.context.playState === PLAY_STATE.PLAYING}
-            icon={<PlayIcon />}
-          />
-          <ControlButton
-            label="Pause"
-            className="bg-yellow-500"
-            onClick={handlePause}
-            disabled={
-              state.context.playState === PLAY_STATE.PAUSED ||
-              state.context.playState === PLAY_STATE.STOPPED
-            }
-            icon={<PauseIcon />}
-          />
-          <ControlButton
-            label="Stop"
-            className="bg-red-500"
-            onClick={handleStop}
-            disabled={state.context.playState === PLAY_STATE.STOPPED}
-            icon={<StopCircle />}
-          />
-          <div className="flex-1">
-            <SeekBar
-              totalFrames={animationFrame}
-              currentFrame={state.context.progress}
-              onSeek={handleSeek}
-              disabled={animationFrame === 0}
-            />
-          </div>
-          <Switch
-            label="Enable Loop"
-            onChange={handleLoopSwitch}
-            value={state.context.loop}
-            disabled={state.context.playState === PLAY_STATE.PLAYING}
-          />
-        </div>
-        <div className="mt-4">
-          <UploadDialog onUpload={handleUploadFile} />
-        </div>
-      </div>
-    </div>
+    <Theme appearance="light" accentColor="blue" grayColor="slate" scaling="95%">
+      <Container size="4">
+        <Box className="min-h-screen py-8">
+          <Flex direction="column" gap="4">
+            <Text size="8" weight="bold" align="center">
+              Lottie Player Synchronization
+            </Text>
+            
+            <Flex direction="column" gap="4" className="mb-20">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Suspense fallback={<LoadingCard />}>
+                  <PlayerCard
+                    src={state.context.filePath}
+                    onLoad={handleOnLoad}
+                    onComplete={handleComplete}
+                    playState={state.context.playState}
+                    loop={state.context.loop}
+                    progress={state.context.progress}
+                    initialPlayer="react-lottie"
+                  />
+                </Suspense>
+                <Suspense fallback={<LoadingCard />}>
+                  <PlayerCard
+                    src={state.context.filePath}
+                    onLoad={handleOnLoad}
+                    onComplete={handleComplete}
+                    playState={state.context.playState}
+                    loop={state.context.loop}
+                    progress={state.context.progress}
+                    initialPlayer="dotlottie"
+                  />
+                </Suspense>
+                <Suspense fallback={<LoadingCard />}>
+                  <PlayerCard
+                    src={state.context.filePath}
+                    onLoad={handleOnLoad}
+                    onComplete={handleComplete}
+                    playState={state.context.playState}
+                    loop={state.context.loop}
+                    progress={state.context.progress}
+                    initialPlayer="lottie-web"
+                  />
+                </Suspense>
+              </div>
+            </Flex>
+
+            <Box className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 py-4 px-8">
+              <Flex gap="4" align="center" justify="center">
+                <ControlButton
+                  label="Play"
+                  className="bg-blue-500"
+                  onClick={handlePlay}
+                  disabled={state.context.playState === PLAY_STATE.PLAYING}
+                  icon={<PlayIcon />}
+                />
+                <ControlButton
+                  label="Pause"
+                  className="bg-yellow-500"
+                  onClick={handlePause}
+                  disabled={
+                    state.context.playState === PLAY_STATE.PAUSED ||
+                    state.context.playState === PLAY_STATE.STOPPED
+                  }
+                  icon={<PauseIcon />}
+                />
+                <ControlButton
+                  label="Stop"
+                  className="bg-red-500"
+                  onClick={handleStop}
+                  disabled={state.context.playState === PLAY_STATE.STOPPED}
+                  icon={<StopCircle />}
+                />
+                <Box className="flex-1">
+                  <SeekBar
+                    totalFrames={animationFrame}
+                    currentFrame={state.context.progress}
+                    onSeek={handleSeek}
+                    disabled={animationFrame === 0}
+                  />
+                </Box>
+                <Tooltip content={state.context.loop ? "Disable Loop" : "Enable Loop"}>
+                  <IconButton
+                    variant="solid"
+                    color={state.context.loop ? "blue" : "gray"}
+                    onClick={handleLoopSwitch}
+                    className="max-w-18"
+                  >
+                    <Repeat />
+                  </IconButton>
+                </Tooltip>
+                <UploadDialog onUpload={handleUploadFile} disabled={state.context.playState === PLAY_STATE.PLAYING} />
+              </Flex>
+            </Box>
+          </Flex>
+        </Box>
+      </Container>
+    </Theme>
   );
 }
 
 interface UploadDialogProps {
   onUpload: (file: File) => void | Promise<void>;
+  disabled?: boolean;
 }
 
-function UploadDialog({ onUpload }: UploadDialogProps) {
+function UploadDialog({ onUpload, disabled }: UploadDialogProps) {
   const [open, setOpen] = useState(false);
 
   const handleDrop = async (acceptedFiles: File[]) => {
@@ -261,10 +252,11 @@ function UploadDialog({ onUpload }: UploadDialogProps) {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild={true}>
-        <Button>
+        {/* <Tooltip content="Upload Lottie File"> */}
+        <Button title="Upload Lottie File" disabled={disabled}>
           <UploadIcon />
-          Upload Lottie File
         </Button>
+        {/* </Tooltip> */}
       </Dialog.Trigger>
       <Dialog.Content maxWidth="450px">
         <Dialog.Title>Upload Lottie File</Dialog.Title>
@@ -284,5 +276,14 @@ function UploadDialog({ onUpload }: UploadDialogProps) {
     </Dialog.Root>
   );
 }
+
+// Loading card component
+const LoadingCard = () => (
+  <Card size="2">
+    <Flex align="center" justify="center" className="min-h-[200px]">
+      <Loader2 className="animate-spin" />
+    </Flex>
+  </Card>
+);
 
 export default App;

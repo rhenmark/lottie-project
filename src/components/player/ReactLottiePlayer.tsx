@@ -4,12 +4,13 @@ import { Player } from '@lottiefiles/react-lottie-player';
 interface LottieWebProps {
   onLoad?: () => void;
   onComplete?: () => void;
+  lottieRef?: (ref: Player) => void;
+  src: string;
 }
 
 const ReactLottiePlayer = forwardRef<Player, LottieWebProps>(({ onLoad, onComplete, src }, ref) => {
   return (
     <div className='p-2'>
-        <h4>ReactLottiePlayer</h4>
         <Player
             lottieRef={ref}
             src={src}

@@ -28,6 +28,7 @@ const playerMachine = createMachine({
     PLAY: {
       actions: assign({
         playState: PLAY_STATE.PLAYING,
+        progress: 0,
       }),
     },
     STOP: {

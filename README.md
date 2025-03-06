@@ -34,3 +34,59 @@ interface LottieWebProps {
   autoplay?: boolean;        // Controls if animation should autoplay
   renderer?: "svg" | "canvas" | "html";  // Animation renderer type
 }
+```
+
+```typescript 
+interface LottieWebRef {
+  play: () => void;          // Start the animation
+  pause: () => void;         // Pause the animation
+  stop: () => void;          // Stop the animation
+  goToAndStop: (frame: number, isFrame?: boolean) => void;  // Go to specific frame
+  getDuration: (inFrames?: boolean) => number;              // Get animation duration
+  setLoop: (loop: boolean) => void;                         // Set loop behavior
+}
+```
+
+```typescript
+import { useRef } from 'react';
+import LottieWeb, { LottieWebRef } from './components/player/LottieWeb';
+
+function App() {
+  const lottieRef = useRef<LottieWebRef>(null);
+
+  return (
+    <div>
+      <LottieWeb
+        ref={lottieRef}
+        src="path/to/animation.json"
+        autoplay={true}
+        loop={true}
+      />
+    </div>
+  );
+}
+```
+
+```typescript
+function App() {
+  const lottieRef = useRef<LottieWebRef>(null);
+
+  return (
+    <div>
+      <LottieWeb
+        ref={lottieRef}
+        src="path/to/animation.json"
+        onLoad={() => console.log('Animation loaded')}
+        onComplete={() => console.log('Animation completed')}
+      />
+      <div className="controls">
+        <button onClick={() => lottieRef.current?.play()}>Play</button>
+        <button onClick={() => lottieRef.current?.pause()}>Pause</button>
+        <button onClick={() => lottieRef.current?.stop()}>Stop</button>
+      </div>
+    </div>
+  );
+}
+```
+
+### LIMITATIONS
